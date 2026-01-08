@@ -8,75 +8,93 @@ interface LobbyPageProps {
   onEnterRoom: (chainId: string) => void;
 }
 
-const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom }) => {
+const LobbyPage: React.FC<LobbyPageProps> = ({
+  chainId,
+  userAddress,
+  onEnterRoom,
+}) => {
   const [rooms, setRooms] = useState<RoomsResponse['rooms']>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  
-  // Create room form state
+
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(4);
 
-  // Fetch rooms from backend GraphQL service
+  /* -------------------- Fetch Rooms -------------------- */
   const fetchRooms = async () => {
     try {
+      console.log('🔄 Fetching rooms...');
       setError(null);
-      // GraphQL query to backend service
+
       const data = await graphqlRequest<RoomsResponse>(QUERIES.ROOMS);
+
+      console.log('✅ Rooms fetched:', data.rooms);
       setRooms(data.rooms);
     } catch (err) {
-      console.error('Failed to fetch rooms:', err);
+      console.error('❌ Failed to fetch rooms:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch rooms');
     } finally {
       setLoading(false);
     }
   };
 
-  // Poll for room updates every 2 seconds
   useEffect(() => {
     fetchRooms();
     const interval = setInterval(fetchRooms, 2000);
     return () => clearInterval(interval);
   }, []);
 
+  /* -------------------- Create Room -------------------- */
   const handleCreateRoom = async () => {
+    console.log('🔥 Create Room button clicked');
+    console.log(
+      '🌍 GraphQL Endpoint:',
+      import.meta.env.VITE_BACKEND_GRAPHQL_URL
+    );
+
     if (!roomName.trim()) {
       alert('Please enter a room name');
       return;
     }
 
     setCreating(true);
+
     try {
       const input: CreateRoomInput = {
         roomName: roomName.trim(),
-        maxPlayers: maxPlayers,
+        maxPlayers,
       };
 
-      // GraphQL mutation to backend service
+      console.log('📦 CreateRoom input:', input);
+
       const data = await graphqlRequest<{ createRoom: OperationResult }>(
         MUTATIONS.CREATE_ROOM,
         { input }
       );
 
+      console.log('✅ CreateRoom response:', data);
+
       if (data.createRoom.success) {
-        // Reset form on success
         setRoomName('');
         setMaxPlayers(4);
         alert('Room created successfully!');
-        // Refresh rooms list
         fetchRooms();
       } else {
-        alert(`Failed to create room: ${data.createRoom.message}`);
+        alert(`Create failed: ${data.createRoom.message}`);
       }
     } catch (err) {
-      console.error('Failed to create room:', err);
-      alert('Failed to create room: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      console.error('❌ CreateRoom error:', err);
+      alert(
+        'Failed to create room: ' +
+          (err instanceof Error ? err.message : 'Unknown error')
+      );
     } finally {
       setCreating(false);
     }
   };
 
+  /* -------------------- UI -------------------- */
   if (loading) {
     return <div>Loading lobby...</div>;
   }
@@ -84,38 +102,48 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
   return (
     <div>
       <h2>Draft Lobby</h2>
-      <p>Connected to chain: <code style={{ fontSize: '12px' }}>{chainId}</code></p>
-      <p>User address: <code style={{ fontSize: '12px' }}>{userAddress}</code></p>
-      
-      {/* Create Room Form */}
-      <div style={{ 
-        border: '1px solid #ccc', 
-        padding: '15px', 
-        marginBottom: '20px',
-        borderRadius: '4px'
-      }}>
+
+      <p>
+        Connected to chain:{' '}
+        <code style={{ fontSize: '12px' }}>{chainId}</code>
+      </p>
+      <p>
+        User address:{' '}
+        <code style={{ fontSize: '12px' }}>{userAddress}</code>
+      </p>
+
+      {/* -------- Create Room -------- */}
+      <div
+        style={{
+          border: '1px solid #ccc',
+          padding: '15px',
+          marginBottom: '20px',
+          borderRadius: '4px',
+        }}
+      >
         <h3>Create New Room</h3>
+
         <div style={{ marginBottom: '10px' }}>
           <label>
-            Room Name: 
+            Room Name:
             <input
               type="text"
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
-              style={{ marginLeft: '10px', padding: '5px' }}
-              placeholder="Enter room name"
               disabled={creating}
+              style={{ marginLeft: '10px', padding: '5px' }}
             />
           </label>
         </div>
+
         <div style={{ marginBottom: '10px' }}>
           <label>
-            Max Players: 
+            Max Players:
             <select
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(Number(e.target.value))}
-              style={{ marginLeft: '10px', padding: '5px' }}
               disabled={creating}
+              style={{ marginLeft: '10px', padding: '5px' }}
             >
               <option value={2}>2</option>
               <option value={3}>3</option>
@@ -125,6 +153,7 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
             </select>
           </label>
         </div>
+
         <button
           onClick={handleCreateRoom}
           disabled={creating}
@@ -137,66 +166,57 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
             cursor: creating ? 'not-allowed' : 'pointer',
           }}
         >
-          {creating ? 'Creating...' : 'Create Room'}
+          {creating ? 'Creating…' : 'Create Room'}
         </button>
       </div>
 
-      {/* Rooms List */}
+      {/* -------- Rooms List -------- */}
       <h3>Available Rooms</h3>
-      
+
       {error && (
         <div style={{ color: 'red', marginBottom: '10px' }}>
-          Error loading rooms: {error}
+          Error: {error}
         </div>
       )}
-      
+
       {rooms.length === 0 ? (
-        <p>No rooms available. Create one above!</p>
+        <p>No rooms available. Create one above.</p>
       ) : (
-        <div>
-          {rooms.map((room) => (
-            <div
-              key={room.chainId}
+        rooms.map((room) => (
+          <div
+            key={room.chainId}
+            style={{
+              border: '1px solid #ddd',
+              padding: '10px',
+              marginBottom: '10px',
+              borderRadius: '4px',
+              backgroundColor: '#f9f9f9',
+            }}
+          >
+            <h4>{room.roomName}</h4>
+            <p>Status: <strong>{room.status}</strong></p>
+            <p>Max Players: {room.maxPlayers}</p>
+            <p>
+              Chain ID:{' '}
+              <code style={{ fontSize: '12px' }}>{room.chainId}</code>
+            </p>
+
+            <button
+              onClick={() => onEnterRoom(room.chainId)}
               style={{
-                border: '1px solid #ddd',
-                padding: '10px',
-                marginBottom: '10px',
+                padding: '6px 12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
                 borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
+                cursor: 'pointer',
               }}
             >
-              <h4>{room.roomName}</h4>
-              <p>Status: <strong>{room.status}</strong></p>
-              <p>Max Players: {room.maxPlayers}</p>
-              <p>Chain ID: <code style={{ fontSize: '12px' }}>{room.chainId}</code></p>
-              <button
-                onClick={() => onEnterRoom(room.chainId)}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Enter Room
-              </button>
-            </div>
-          ))}
-        </div>
+              Enter Room
+            </button>
+          </div>
+        ))
       )}
-      
-      <div style={{ marginTop: '30px', fontSize: '14px', color: '#666' }}>
-        <h4>Backend GraphQL Integration:</h4>
-        <ul>
-          <li>✅ Real GraphQL queries to backend service</li>
-          <li>✅ Real CreateRoom mutations</li>
-          <li>✅ Polling every 2 seconds</li>
-          <li>✅ No mocked data</li>
-          <li>✅ Backend endpoint: http://localhost:8080/graphql</li>
-        </ul>
-      </div>
     </div>
   );
 };
