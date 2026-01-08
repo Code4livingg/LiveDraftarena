@@ -1,24 +1,22 @@
 // GraphQL client for Linera backend service
-import { GRAPHQL_ENDPOINT } from './config';
+import { GRAPHQL_ENDPOINT } from './config.ts';
 
 // Player ID management for multi-user sessions
 let currentPlayerId: string | null = null;
 
 // Get or generate player ID for this browser session
 function getOrCreatePlayerId(): string {
-  // Try to get from localStorage first
   let playerId = localStorage.getItem('livedraft_player_id');
-  
+
   if (!playerId) {
     // Generate new player ID (16 hex characters)
     playerId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
-    // Store in localStorage for persistence
+
     localStorage.setItem('livedraft_player_id', playerId);
   }
-  
+
   currentPlayerId = playerId;
   return playerId;
 }
@@ -36,7 +34,7 @@ export const QUERIES = {
       }
     }
   `,
-  
+
   ROOM_STATE: `
     query GetRoomState($chainId: String!) {
       roomState(chainId: $chainId) {
@@ -55,7 +53,7 @@ export const QUERIES = {
       }
     }
   `,
-  
+
   MY_PICKS: `
     query MyPicks($chainId: String!) {
       myPicks(chainId: $chainId) {
@@ -65,13 +63,13 @@ export const QUERIES = {
       }
     }
   `,
-  
+
   PLAYER_INFO: `
     query PlayerInfo {
       playerInfo
     }
   `,
-  
+
   HEALTH: `
     query Health {
       health
@@ -89,7 +87,7 @@ export const MUTATIONS = {
       }
     }
   `,
-  
+
   JOIN_ROOM: `
     mutation JoinRoom($chainId: String!) {
       joinRoom(chainId: $chainId) {
@@ -99,7 +97,7 @@ export const MUTATIONS = {
       }
     }
   `,
-  
+
   START_DRAFT: `
     mutation StartDraft($chainId: String!) {
       startDraft(chainId: $chainId) {
@@ -109,7 +107,7 @@ export const MUTATIONS = {
       }
     }
   `,
-  
+
   PICK_ITEM: `
     mutation PickItem($chainId: String!, $input: PickItemInput!) {
       pickItem(chainId: $chainId, input: $input) {
@@ -126,17 +124,14 @@ export async function graphqlRequest<T>(
   query: string,
   variables?: Record<string, any>
 ): Promise<T> {
-  // Ensure we have a player ID
   const playerId = getOrCreatePlayerId();
-  
+
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // Send player ID in header for backend identity tracking
       'x-player-id': playerId,
     },
-    // Include credentials to send cookies (for backup identity tracking)
     credentials: 'include',
     body: JSON.stringify({
       query,
@@ -165,10 +160,11 @@ export function getCurrentPlayerId(): string {
 // Get player info from backend
 export async function getPlayerInfo(): Promise<string> {
   try {
-    const data = await graphqlRequest<{ playerInfo: string }>(QUERIES.PLAYER_INFO);
+    const data = await graphqlRequest<{ playerInfo: string }>(
+      QUERIES.PLAYER_INFO
+    );
     return data.playerInfo;
-  } catch (error) {
-    console.error('Failed to get player info:', error);
+  } catch {
     return 'Unknown player';
   }
 }
@@ -178,8 +174,7 @@ export async function checkBackendHealth(): Promise<boolean> {
   try {
     const data = await graphqlRequest<{ health: string }>(QUERIES.HEALTH);
     return data.health === 'Service is running';
-  } catch (error) {
-    console.error('Backend health check failed:', error);
+  } catch {
     return false;
   }
 }
