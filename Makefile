@@ -1,4 +1,4 @@
-.PHONY: build test clean setup deploy verify
+.PHONY: build test clean setup deploy verify service
 
 # Build the project
 build:
@@ -49,3 +49,11 @@ verify:
 
 # Full deployment pipeline
 deploy-full: build-wasm deploy verify
+
+# Start the service
+service:
+	cd service && ./start.sh
+
+# Build service
+service-build:
+	cd service && cargo build --release
