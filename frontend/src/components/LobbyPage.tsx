@@ -49,8 +49,8 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
     setCreating(true);
     try {
       const input: CreateRoomInput = {
-        room_name: roomName.trim(),
-        max_players: maxPlayers,
+        roomName: roomName.trim(),
+        maxPlayers: maxPlayers,
       };
 
       // GraphQL mutation to backend service
@@ -156,7 +156,7 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
         <div>
           {rooms.map((room) => (
             <div
-              key={room.chain_id}
+              key={room.chainId}
               style={{
                 border: '1px solid #ddd',
                 padding: '10px',
@@ -165,12 +165,12 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
                 backgroundColor: '#f9f9f9',
               }}
             >
-              <h4>{room.metadata.room_name}</h4>
-              <p>Status: <strong>{room.metadata.status}</strong></p>
-              <p>Max Players: {room.metadata.max_players}</p>
-              <p>Chain ID: <code style={{ fontSize: '12px' }}>{room.chain_id}</code></p>
+              <h4>{room.roomName}</h4>
+              <p>Status: <strong>{room.status}</strong></p>
+              <p>Max Players: {room.maxPlayers}</p>
+              <p>Chain ID: <code style={{ fontSize: '12px' }}>{room.chainId}</code></p>
               <button
-                onClick={() => onEnterRoom(room.chain_id)}
+                onClick={() => onEnterRoom(room.chainId)}
                 style={{
                   padding: '6px 12px',
                   backgroundColor: '#007bff',

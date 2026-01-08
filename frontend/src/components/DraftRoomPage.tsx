@@ -92,7 +92,7 @@ const DraftRoomPage: React.FC<DraftRoomPageProps> = ({
   const handlePickItem = async (itemId: number) => {
     setSubmitting(true);
     try {
-      const input: PickItemInput = { item_id: itemId };
+      const input: PickItemInput = { itemId: itemId };
       
       // GraphQL mutation to backend service
       const data = await graphqlRequest<{ pickItem: OperationResult }>(
@@ -146,11 +146,11 @@ const DraftRoomPage: React.FC<DraftRoomPageProps> = ({
     );
   }
 
-  const isCreator = roomState.creator === userAddress;
+  const isCreator = roomState.players[0] === userAddress;
   const isPlayerInRoom = roomState.players.includes(userAddress);
-  const currentPlayer = roomState.players[roomState.current_turn];
+  const currentPlayer = roomState.players[roomState.currentTurn];
   const isMyTurn = currentPlayer === userAddress;
-  const myPicks = roomState.picks.find(p => p.player === userAddress)?.items || [];
+  const myPicks: any[] = []; // TODO: Use separate MY_PICKS query
 
   return (
     <div>
@@ -172,8 +172,8 @@ const DraftRoomPage: React.FC<DraftRoomPageProps> = ({
       }}>
         <h3>Room Status</h3>
         <p><strong>Status:</strong> {roomState.status}</p>
-        <p><strong>Players:</strong> {roomState.players.length} / {roomState.max_players}</p>
-        <p><strong>Round:</strong> {roomState.round} / {roomState.max_rounds}</p>
+        <p><strong>Players:</strong> {roomState.players.length} / {roomState.maxPlayers}</p>
+        <p><strong>Round:</strong> {roomState.round} / {roomState.maxRounds}</p>
         {roomState.status === 'Drafting' && (
           <p><strong>Current Turn:</strong> {currentPlayer === userAddress ? 'Your turn!' : 'Waiting...'}</p>
         )}
@@ -229,7 +229,7 @@ const DraftRoomPage: React.FC<DraftRoomPageProps> = ({
             border: currentPlayer === player ? '2px solid #007bff' : '1px solid #ddd'
           }}>
             <strong>Player {index + 1}:</strong> {player === userAddress ? 'You' : `${player.slice(0, 8)}...`}
-            {player === roomState.creator && <span style={{ color: '#28a745' }}> (Creator)</span>}
+            {player === roomState.players[0] && <span style={{ color: '#28a745' }}> (Creator)</span>}
             {currentPlayer === player && roomState.status === 'Drafting' && (
               <span style={{ color: '#007bff' }}> (Current Turn)</span>
             )}
