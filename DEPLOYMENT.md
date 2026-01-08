@@ -1,6 +1,6 @@
 # LiveDraft Arena - Conway Testnet Deployment
 
-This guide covers deploying LiveDraft Arena contracts to the Conway testnet.
+This guide covers deploying LiveDraft Arena contracts to the Conway testnet with proper Application ID management.
 
 ## Prerequisites
 
@@ -28,148 +28,201 @@ rustup target add wasm32-unknown-unknown
 
 ## Deployment Process
 
-### Option 1: Automated Deployment (Recommended)
+### Automated Deployment (Recommended)
 ```bash
 # Run the complete deployment pipeline
-make deploy-full
-
-# Or step by step:
-make build-wasm    # Build WASM contract
-make deploy        # Deploy to Conway testnet
-make verify        # Verify deployment
-```
-
-### Option 2: Manual Deployment
-```bash
-# 1. Build WASM contract
-cargo build --target wasm32-unknown-unknown --release
-
-# 2. Run deployment script
 ./scripts/deploy_conway.sh
 
-# 3. Verify deployment
+# Verify deployment
 ./scripts/verify_deployment.sh
 ```
 
-## Deployment Script Details
+The deployment script will:
+1. Build WASM contract
+2. Deploy to Conway testnet with `ContractParameters::Lobby`
+3. Create service configuration (`service/.env`)
+4. Create frontend configuration (`frontend/src/config.ts`)
+5. Generate deployment summary (`deployment_info.json`)
 
-The `scripts/deploy_conway.sh` script performs these steps:
+## Application ID Management
 
-1. **Prerequisites Check**
-   - Verifies linera CLI is installed
-   - Checks Rust and WASM target availability
-   - Validates wallet and chain setup
+### Single Source of Truth
+The deployment creates a **single Application ID** used by all components:
 
-2. **WASM Build**
-   - Cleans previous builds
-   - Builds contract for `wasm32-unknown-unknown` target
-   - Verifies WASM file creation
+```
+Deployment Script
+    ↓
+service/.env (LIVEDRAFT_APP_ID=...)
+    ↓
+Backend Service (reads from .env)
 
-3. **Linera Deployment**
-   - Publishes bytecode to Conway testnet
-   - Creates application instance (Lobby)
-   - Returns Application ID
+    ↓
+frontend/src/config.ts (APP_ID: '...')
+    ↓
+Frontend (imports from config)
+```
 
-4. **Frontend Configuration**
-   - Updates `frontend/src/linera.ts` with deployed App ID
-   - Creates backup of original configuration
+### Configuration Files Created
 
-5. **Deployment Summary**
-   - Outputs all deployment details
-   - Saves deployment info to `deployment_info.txt`
+**Service Configuration** (`service/.env`):
+```bash
+# LiveDraft Arena Service Configuration
+LIVEDRAFT_APP_ID=deployed-app-id-here
+# LINERA_WALLET_PATH=/path/to/wallet.json
+# LIVEDRAFT_CHAIN_ID=chain-id-here
+# PORT=8080
+```
+
+**Frontend Configuration** (`frontend/src/config.ts`):
+```typescript
+export const LIVEDRAFT_CONFIG = {
+  APP_ID: 'deployed-app-id-here',
+  GRAPHQL_ENDPOINT: 'http://localhost:8080/graphql',
+  DEPLOYMENT: {
+    BYTECODE_ID: 'bytecode-id-here',
+    CHAIN_ID: 'chain-id-here',
+    DEPLOYED_AT: '2024-01-08T12:00:00Z',
+    NETWORK: 'Conway Testnet'
+  }
+} as const;
+```
 
 ## Application Architecture
 
 ### Unified Contract Design
 - **Single Application ID** for both Lobby and DraftRoom
-- **Main Chain**: Runs the Lobby contract
-- **Microchains**: Each DraftRoom runs on its own microchain
-- **Parameters**: Distinguish between Lobby and DraftRoom instances
+- **Main Chain**: Runs the Lobby contract (`ContractParameters::Lobby`)
+- **Microchains**: Each DraftRoom runs on its own microchain (`ContractParameters::DraftRoom { max_players }`)
 
-### Contract Parameters
+### Contract Parameters Used
 ```rust
-// Lobby instance (main chain)
+// Lobby instance (created by deployment script)
 ContractParameters::Lobby
 
-// DraftRoom instance (microchain)
+// DraftRoom instances (created by Lobby operations)
 ContractParameters::DraftRoom { max_players: 4 }
 ```
 
 ## Post-Deployment
 
-### 1. Frontend Integration
-The deployment script automatically updates:
-```typescript
-// frontend/src/linera.ts
-export const LINERA_CONFIG = {
-  LOBBY_APP_ID: 'deployed-app-id-here',
-  // ...
-};
+### 1. Start Backend Service
+```bash
+cd service
+./start.sh  # Automatically loads .env configuration
 ```
 
-### 2. Testing the Deployment
+The service will:
+- Load `LIVEDRAFT_APP_ID` from `.env` file
+- Connect to Conway testnet
+- Serve GraphQL API on `http://localhost:8080/graphql`
+
+### 2. Start Frontend
 ```bash
-# Start frontend
 cd frontend
 npm install
 npm run dev
-
-# Test flow:
-# 1. Connect wallet with deployed chain ID
-# 2. Create rooms in lobby
-# 3. Join rooms and start drafts
 ```
 
-### 3. Monitoring
+The frontend will:
+- Import `APP_ID` from `config.ts`
+- Connect to backend service
+- Serve UI on `http://localhost:3000`
+
+### 3. Test the Deployment
+1. Open `http://localhost:3000`
+2. Connect wallet (will use deployed chain)
+3. Create rooms in lobby
+4. Join rooms and start drafts
+
+## Environment Variables
+
+### Service Environment Variables
 ```bash
-# Check wallet status
-linera wallet show
+# Required (set by deployment script)
+LIVEDRAFT_APP_ID=your-deployed-app-id
 
-# Query application state
-linera query-application <app-id>
+# Optional overrides
+LINERA_WALLET_PATH=/path/to/wallet.json
+LIVEDRAFT_CHAIN_ID=your-chain-id
+PORT=8080
+```
 
-# View deployment info
-cat deployment_info.txt
+### Manual Configuration
+If needed, you can manually set the Application ID:
+
+```bash
+# Set environment variable
+export LIVEDRAFT_APP_ID=your-app-id
+
+# Or create service/.env file
+echo "LIVEDRAFT_APP_ID=your-app-id" > service/.env
+
+# Update frontend config
+# Edit frontend/src/config.ts and set APP_ID
+```
+
+## Verification
+
+### Automated Verification
+```bash
+./scripts/verify_deployment.sh
+```
+
+This checks:
+- Linera CLI connectivity
+- Application deployment status
+- Service configuration
+- Frontend configuration
+- Chain accessibility
+
+### Manual Verification
+```bash
+# Check application exists
+linera query-application $LIVEDRAFT_APP_ID
+
+# Check service health
+curl http://localhost:8080/health
+
+# Check frontend config
+grep APP_ID frontend/src/config.ts
 ```
 
 ## Troubleshooting
 
-### Common Issues
-
-**WASM Build Fails**
+### Application ID Issues
 ```bash
-# Ensure WASM target is installed
-rustup target add wasm32-unknown-unknown
+# Check deployment info
+cat deployment_info.json
 
-# Clean and rebuild
-cargo clean
-cargo build --target wasm32-unknown-unknown --release
+# Check service config
+cat service/.env
+
+# Check frontend config
+cat frontend/src/config.ts
 ```
 
-**Deployment Fails**
+### Service Won't Start
 ```bash
-# Check wallet has sufficient balance
+# Check if App ID is set
+echo $LIVEDRAFT_APP_ID
+
+# Check .env file exists
+ls -la service/.env
+
+# Check wallet access
 linera wallet show
-
-# Verify chain is active
-linera wallet set-default <chain-id>
 ```
 
-**Frontend Not Connecting**
-- Verify App ID was updated in `frontend/src/linera.ts`
-- Check Conway testnet endpoint is accessible
-- Ensure chain ID matches deployment
-
-### Logs and Debugging
+### Frontend Not Connecting
 ```bash
-# View deployment logs
-cat deployment_info.txt
+# Verify config file exists
+ls -la frontend/src/config.ts
 
-# Check Linera logs
-linera --help
+# Check if App ID is set correctly
+grep -n "REPLACE_AFTER_DEPLOY" frontend/src/config.ts
 
-# Verify contract deployment
-linera query-application <app-id>
+# If found, re-run deployment script
+./scripts/deploy_conway.sh
 ```
 
 ## Production Considerations
@@ -178,16 +231,18 @@ linera query-application <app-id>
 - Store private keys securely
 - Use hardware wallets for mainnet
 - Validate all deployment parameters
+- Never commit `.env` files with real App IDs
 
 ### Monitoring
-- Set up application monitoring
-- Monitor chain health
-- Track transaction costs
+- Monitor application state: `linera query-application $APP_ID`
+- Monitor chain health: `linera query-balance`
+- Monitor service health: `curl http://localhost:8080/health`
 
 ### Backup
 - Backup wallet files
 - Save deployment configurations
 - Document all App IDs and Chain IDs
+- Keep `deployment_info.json` safe
 
 ## Conway Testnet Specifics
 
@@ -195,3 +250,21 @@ linera query-application <app-id>
 - **GraphQL Endpoint**: `https://conway-testnet.linera.net:8080/graphql`
 - **Purpose**: Testing and development
 - **Limitations**: Testnet may reset, use for testing only
+
+## File Structure After Deployment
+
+```
+LiveDraftArena/
+├── deployment_info.json          # Deployment summary
+├── service/
+│   ├── .env                      # Service configuration
+│   └── start.sh                  # Service startup script
+├── frontend/
+│   └── src/
+│       └── config.ts             # Frontend configuration
+└── scripts/
+    ├── deploy_conway.sh          # Deployment script
+    └── verify_deployment.sh      # Verification script
+```
+
+All components use the same deployed Application ID for consistency.

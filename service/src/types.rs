@@ -30,21 +30,23 @@ pub struct DraftRoomMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
 pub struct RoomData {
     pub chain_id: String, // ChainId as string for GraphQL
-    pub metadata: DraftRoomMetadata,
+    pub room_name: String,
+    pub max_players: u8,
+    pub current_players: u8,
+    pub status: RoomStatus,
 }
 
 /// Draft room state for individual room queries
 #[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
 pub struct DraftRoomState {
+    pub chain_id: String, // ChainId as string for GraphQL
     pub players: Vec<String>, // Owner addresses as strings
     pub max_players: u8,
     pub current_turn: u8,
     pub round: u8,
     pub max_rounds: u8,
     pub pool: Vec<DraftItem>,
-    pub picks: Vec<PlayerPicks>, // Flattened for GraphQL
     pub status: RoomStatus,
-    pub creator: Option<String>, // Owner address as string
 }
 
 /// Player picks for GraphQL response
@@ -58,12 +60,12 @@ pub struct PlayerPicks {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateRoomInput {
     pub room_name: String,
-    pub max_players: u8,
+    pub max_players: u8, // Match contract u8 type
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PickItemInput {
-    pub item_id: u8,
+    pub item_id: u32, // Frontend uses u32, convert to u8 for contract
 }
 
 /// Operation result for mutations

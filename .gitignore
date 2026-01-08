@@ -25,3 +25,11 @@ yarn-error.log*
 # Environment
 .env
 .env.local
+
+# Deployment (contains sensitive Application IDs)
+deployment_info.json
+service/.env
+frontend/src/config.ts
+
+# Backup files created by deployment script
+*.backup

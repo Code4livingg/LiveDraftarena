@@ -1,6 +1,6 @@
 # LiveDraft Arena Frontend
 
-React + TypeScript frontend for LiveDraft Arena with real Linera blockchain integration.
+React + TypeScript frontend for LiveDraft Arena with real backend GraphQL integration.
 
 ## Development
 
@@ -8,49 +8,50 @@ React + TypeScript frontend for LiveDraft Arena with real Linera blockchain inte
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (requires backend service running)
 npm run dev
 ```
 
-## Real Linera Integration
+## Backend Integration
 
-This frontend now uses **real @linera/client integration** with:
+This frontend connects to the real Linera backend service at `http://localhost:8080/graphql`.
 
-### ✅ Features Implemented
-- **Real wallet connection** via @linera/client signer
-- **Real GraphQL queries** to Conway testnet
-- **Real operation submission** to smart contracts
-- **Persistent chain selection** via localStorage
+### ✅ Features
+- **Real GraphQL queries** to backend service
+- **Real mutations** for all operations
 - **Real-time polling** (1-2 second intervals)
+- **No @linera/client** in browser
+- **No mocked data** - all from backend
 
-### 🔧 Configuration
-- **Conway Testnet Endpoint**: `https://conway-testnet.linera.net:8080/graphql`
-- **Lobby App ID**: `e476187f6ddfeb9d588c7b45d3df334d5501d6499b3f9ad5595cae86cce16a65`
-- **Signer Persistence**: Private keys stored in localStorage
+### 🔧 Architecture
+```
+Frontend (React) → GraphQL HTTP → Backend Service → Linera Conway Testnet
+```
 
-### 📁 Architecture
-```
-src/
-├── hooks/
-│   ├── useLinera.ts        # Client & signer management
-│   ├── useGraphQLQuery.ts  # Real GraphQL polling
-│   └── useOperation.ts     # Operation execution
-├── components/
-│   ├── WalletConnect.tsx   # Real wallet connection
-│   ├── LobbyPage.tsx       # Real lobby queries & operations
-│   └── DraftRoomPage.tsx   # Real draft room state & actions
-└── linera.ts              # Core Linera integration
-```
+### 📡 GraphQL Operations
+
+**Queries:**
+- `rooms` - Get all draft rooms from lobby
+- `roomState(chainId)` - Get specific room state
+- `health` - Backend health check
+
+**Mutations:**
+- `createRoom(input)` - Create new room
+- `joinRoom(chainId)` - Join existing room
+- `startDraft(chainId)` - Start draft (creator only)
+- `pickItem(chainId, input)` - Pick item during draft
 
 ### 🚀 Usage Flow
-1. **Connect**: Creates/loads signer, selects chain ID
-2. **Lobby**: Real GraphQL queries for rooms, real CreateRoom operations
-3. **Draft Room**: Real-time room state, real JoinRoom/StartDraft/PickItem operations
+1. **Connect**: Backend health check + wallet simulation
+2. **Lobby**: Real GraphQL queries for rooms, real createRoom mutations
+3. **Draft Room**: Real-time room state, real operations via GraphQL
 
-### 🔗 Integration Points
-- **GraphQL Queries**: Direct to Conway testnet GraphQL endpoint
-- **Operations**: Signed and submitted via @linera/client
-- **State Management**: Real blockchain state with polling
-- **Error Handling**: Real network and contract errors
+### 🔗 Backend Dependency
+The frontend requires the backend service to be running:
+```bash
+# In service/ directory
+export LIVEDRAFT_APP_ID=your_app_id
+./start.sh
+```
 
-No more mock data - this is a fully functional Linera dApp frontend!
+No more direct blockchain calls - everything goes through the secure backend service!

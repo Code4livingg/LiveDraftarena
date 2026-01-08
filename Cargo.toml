@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "contracts/livedraft-arena",
+    "service",
 ]
 resolver = "2"
 

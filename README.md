@@ -33,12 +33,42 @@ Microchains (DraftRooms)
 
 ## How to Run (Conway Testnet)
 
-1. **Access**: Navigate to deployed frontend URL
+### Quick Deployment
+```bash
+# Deploy contracts and configure all components
+make deploy
+
+# Or use the script directly
+./scripts/deploy_conway.sh
+```
+
+### Start Services
+```bash
+# Start backend service (reads config from service/.env)
+make start-service
+
+# Start frontend (reads config from frontend/src/config.ts)  
+make start-frontend
+```
+
+### Test the Application
+1. **Access**: Open http://localhost:3000
 2. **Connect**: Link Linera wallet and select Conway testnet chain
 3. **Create Room**: Specify room name and max players (2-8)
 4. **Join & Draft**: Enter room, wait for players, start draft, pick cards in snake order
 
 **Technical Requirements**: Linera wallet with Conway testnet access, modern browser with JavaScript enabled.
+
+### Deployment Details
+
+The deployment process creates a **single Application ID** used by all components:
+
+1. **Deploy**: Builds and deploys contracts with `ContractParameters::Lobby`
+2. **Configure**: Creates `service/.env` and `frontend/src/config.ts` with Application ID
+3. **Verify**: `./scripts/verify_deployment.sh` validates the deployment
+4. **Use**: Both service and frontend automatically use the deployed Application ID
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 
 ## Wave-5 Scope
 
