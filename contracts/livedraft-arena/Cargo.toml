@@ -1,0 +1,13 @@
+[package]
+name = "livedraft-arena"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+linera-sdk = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+async-graphql = "7.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]

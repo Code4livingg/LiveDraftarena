@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "contracts/livedraft-arena",
+]
+resolver = "2"
+
+[workspace.dependencies]
+linera-sdk = "0.15"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+async-graphql = "7.0"
