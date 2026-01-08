@@ -1,14 +1,10 @@
 import { useState, useCallback } from 'react';
-import { type Signer } from '@linera/client';
+import { Signer, LineraClient, createLineraClient } from '../linera';
 import {
-  createLineraClient,
   getStoredChainId,
   storeChainId,
   isValidChainId,
 } from '../linera';
-
-// Mock client type since @linera/client doesn't export LineraClient
-type LineraClient = ReturnType<typeof createLineraClient>;
 
 interface LineraState {
   client: LineraClient | null;
@@ -37,7 +33,7 @@ export const useLinera = () => {
 
     try {
       // For now, create a mock signer since we don't have the real implementation
-      const mockSigner = { address: "mock_address" } as Signer;
+      const mockSigner: Signer = { address: "mock_address" };
       
       // Create client
       const client = createLineraClient(mockSigner);

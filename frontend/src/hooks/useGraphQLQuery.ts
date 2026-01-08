@@ -1,8 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createLineraClient } from '../linera';
-
-// Mock client type since @linera/client doesn't export LineraClient
-type LineraClient = ReturnType<typeof createLineraClient>;
+import { LineraClient, createLineraClient } from '../linera';
 
 interface QueryState<T> {
   data: T | null;

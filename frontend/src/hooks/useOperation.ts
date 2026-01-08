@@ -1,9 +1,5 @@
 import { useState, useCallback } from 'react';
-import { type Signer } from '@linera/client';
-import { createLineraClient } from '../linera';
-
-// Mock client type since @linera/client doesn't export LineraClient
-type LineraClient = ReturnType<typeof createLineraClient>;
+import { Signer, LineraClient, createLineraClient } from '../linera';
 
 interface OperationState {
   loading: boolean;
