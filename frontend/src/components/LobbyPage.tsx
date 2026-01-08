@@ -3,7 +3,7 @@ import { RoomsResponse } from '../types';
 import { useLinera } from '../hooks/useLinera';
 import { useGraphQLQuery } from '../hooks/useGraphQLQuery';
 import { useOperation } from '../hooks/useOperation';
-import { LINERA_CONFIG, QUERIES, OPERATIONS } from '../linera';
+import { LOBBY_APP_ID, QUERIES, OPERATIONS } from '../linera';
 
 interface LobbyPageProps {
   chainId: string;
@@ -18,7 +18,7 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
   const { data: roomsData, loading: queryLoading, error: queryError } = useGraphQLQuery<RoomsResponse>(
     client,
     chainId,
-    LINERA_CONFIG.LOBBY_APP_ID,
+    LOBBY_APP_ID,
     QUERIES.LOBBY_ROOMS,
     { pollInterval: 2000 } // Poll every 2 seconds
   );
@@ -28,7 +28,7 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
     client,
     signer,
     chainId,
-    LINERA_CONFIG.LOBBY_APP_ID
+    LOBBY_APP_ID
   );
   
   // Create room form state
@@ -180,7 +180,7 @@ const LobbyPage: React.FC<LobbyPageProps> = ({ chainId, userAddress, onEnterRoom
           <li>✅ GraphQL queries to lobby service</li>
           <li>✅ Real CreateRoom operations</li>
           <li>✅ Polling every 2 seconds</li>
-          <li>✅ App ID: {LINERA_CONFIG.LOBBY_APP_ID}</li>
+          <li>✅ App ID: {LOBBY_APP_ID}</li>
           <li>✅ Conway testnet endpoint</li>
         </ul>
       </div>

@@ -3,7 +3,7 @@ import { DraftRoomState } from '../types';
 import { useLinera } from '../hooks/useLinera';
 import { useGraphQLQuery } from '../hooks/useGraphQLQuery';
 import { useOperation } from '../hooks/useOperation';
-import { LINERA_CONFIG, QUERIES, OPERATIONS } from '../linera';
+import { LOBBY_APP_ID, QUERIES, OPERATIONS } from '../linera';
 
 interface DraftRoomPageProps {
   roomChainId: string;
@@ -22,7 +22,7 @@ const DraftRoomPage: React.FC<DraftRoomPageProps> = ({
   const { data: roomState, loading: queryLoading, error: queryError } = useGraphQLQuery<DraftRoomState>(
     client,
     roomChainId,
-    LINERA_CONFIG.LOBBY_APP_ID, // Same app ID, different chain
+    LOBBY_APP_ID, // Same app ID, different chain
     QUERIES.ROOM_STATE,
     { pollInterval: 1000 } // Poll every 1 second for real-time updates
   );
@@ -32,21 +32,21 @@ const DraftRoomPage: React.FC<DraftRoomPageProps> = ({
     client,
     signer,
     roomChainId,
-    LINERA_CONFIG.LOBBY_APP_ID
+    LOBBY_APP_ID
   );
 
   const { execute: executeStartDraft, loading: starting } = useOperation(
     client,
     signer,
     roomChainId,
-    LINERA_CONFIG.LOBBY_APP_ID
+    LOBBY_APP_ID
   );
 
   const { execute: executePickItem, loading: picking } = useOperation(
     client,
     signer,
     roomChainId,
-    LINERA_CONFIG.LOBBY_APP_ID
+    LOBBY_APP_ID
   );
 
   const handleJoinRoom = async () => {

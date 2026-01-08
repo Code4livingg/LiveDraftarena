@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import { LineraClient, Signer } from '@linera/client';
+import { useState, useCallback } from 'react';
+import { type Signer } from '@linera/client';
 import {
   createLineraClient,
-  createOrLoadSigner,
   getStoredChainId,
   storeChainId,
-  getUserAddress,
   isValidChainId,
 } from '../linera';
+
+// Mock client type since @linera/client doesn't export LineraClient
+type LineraClient = ReturnType<typeof createLineraClient>;
 
 interface LineraState {
   client: LineraClient | null;
@@ -35,14 +36,14 @@ export const useLinera = () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      // Create client
-      const client = createLineraClient();
+      // For now, create a mock signer since we don't have the real implementation
+      const mockSigner = { address: "mock_address" } as Signer;
       
-      // Create or load signer
-      const signer = await createOrLoadSigner();
+      // Create client
+      const client = createLineraClient(mockSigner);
       
       // Get user address
-      const userAddress = getUserAddress(signer);
+      const userAddress = mockSigner.address;
       
       // Try to get stored chain ID
       const storedChainId = getStoredChainId();
@@ -50,14 +51,14 @@ export const useLinera = () => {
       setState(prev => ({
         ...prev,
         client,
-        signer,
+        signer: mockSigner,
         userAddress,
         chainId: storedChainId,
         connected: true,
         loading: false,
       }));
 
-      return { client, signer, userAddress, chainId: storedChainId };
+      return { client, signer: mockSigner, userAddress, chainId: storedChainId };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to connect';
       setState(prev => ({

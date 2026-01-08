@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import WalletConnect from './components/WalletConnect';
 import LobbyPage from './components/LobbyPage';
 import DraftRoomPage from './components/DraftRoomPage';
