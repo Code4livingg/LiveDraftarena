@@ -1,28 +1,26 @@
-# LiveDraft Arena Service - Production Dockerfile
-# Multi-stage build for optimized production image
-
 # Build stage
-FROM rust:1.79-slim as builder
+FROM rustlang/rust:nightly-slim as builder
 
-ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
-ENV CARGO_HTTP_TIMEOUT=600
+# Set nightly as default
+RUN rustup default nightly
 
-# Install system dependencies needed for Linera SDK compilation
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     protobuf-compiler \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy the entire project (contracts + service)
+# Copy the entire project
 COPY . .
 
-# Build the service in release mode
+# Build the service in release mode with nightly
 WORKDIR /app/service
-RUN cargo build --release
+RUN cargo +nightly build --release
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -31,26 +29,25 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
 # Copy the compiled binary from builder stage
-COPY --from=builder /app/target/release/livedraft-arena-service /app/livedraft-arena-service
+COPY --from=builder /app/target/release/livedraft-arena-service /app/livedraft-arena
 
 # Make binary executable
-RUN chmod +x /app/livedraft-arena-service
+RUN chmod +x /app/livedraft-arena
 
 # Expose port 8080
 EXPOSE 8080
 
-# Set environment variables for production
+# Set environment variables
 ENV RUST_LOG=info
 ENV BIND_ADDRESS=0.0.0.0
 ENV PORT=8080
 ENV CORS_ORIGINS=*
 
 # Run the service
-CMD ["./livedraft-arena-service"]
+CMD ["./livedraft-arena"]
