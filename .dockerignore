@@ -1,0 +1,48 @@
+# Docker ignore for Render cloud builds
+
+# Rust build artifacts
+target/
+**/target/
+
+# Node.js
+node_modules/
+**/node_modules/
+frontend/dist/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files (will be set via Render dashboard)
+.env.local
+.env.development
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed for runtime)
+README.md
+**/README.md
+DEPLOYMENT.md
+RENDER_DEPLOYMENT.md
+**/FLY_DEPLOYMENT.md
+**/PRODUCTION_DEPLOYMENT.md
+
+# Scripts (not needed for runtime)
+scripts/
+**/deploy-fly.sh
+**/test-graphql.sh
+**/start.sh
+
+# Fly.io specific files (not needed for Render)
+**/fly.toml
