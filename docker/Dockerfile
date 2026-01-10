@@ -1,4 +1,4 @@
-FROM rust:1.75
+FROM rustlang/rust:nightly-slim as builder
 
 WORKDIR /app
 
