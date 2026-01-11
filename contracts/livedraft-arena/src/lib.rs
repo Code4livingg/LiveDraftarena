@@ -1,5 +1,5 @@
 use linera_sdk::{
-    base::ChainId,
+    base::{ChainId, WithContractAbi, ContractAbi},
     views::{MapView, RootView, View},
     Contract, ContractRuntime,
 };
@@ -42,10 +42,20 @@ pub struct LiveDraftArena {
     pub rooms: MapView<ChainId, DraftRoomMetadata>,
 }
 
+impl ContractAbi for LiveDraftArena {
+    type Operation = Operation;
+    type Response = ();
+}
+
+impl WithContractAbi for LiveDraftArena {
+    type Abi = Self;
+}
+
 impl Contract for LiveDraftArena {
     type Message = Message;
     type Parameters = ();
     type InstantiationArgument = ();
+    type EventValue = ();
 
     async fn load(runtime: ContractRuntime<Self>) -> Self {
         LiveDraftArena {
@@ -88,5 +98,9 @@ impl Contract for LiveDraftArena {
 
     async fn execute_message(&mut self, _message: Self::Message) {
         // No message handling needed yet
+    }
+
+    async fn store(self) {
+        // Store the contract state
     }
 }

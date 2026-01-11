@@ -1,5 +1,5 @@
 use async_graphql::{Request, Response, Schema, SimpleObject};
-use linera_sdk::{Service, ServiceRuntime};
+use linera_sdk::{Service, ServiceRuntime, Contract};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -49,9 +49,8 @@ impl Service for LiveDraftArenaService {
     type Parameters = ();
 
     async fn new(runtime: ServiceRuntime<Self>) -> Self {
-        let state = LiveDraftArena::load(runtime.root_view_storage_context())
-            .await
-            .expect("Failed to load state");
+        let state = LiveDraftArena::load(runtime.root_view_storage_context().into())
+            .await;
         
         LiveDraftArenaService {
             state: Arc::new(state),
