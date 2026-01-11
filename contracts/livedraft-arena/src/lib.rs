@@ -1,10 +1,9 @@
 use linera_sdk::{
-    base::{ChainId, Owner, WithContractAbi, ContractAbi},
+    base::ChainId,
     views::{MapView, RootView, View},
     Contract, ContractRuntime,
 };
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 pub mod service;
 
@@ -35,30 +34,7 @@ pub enum Operation {
 
 /// Messages
 #[derive(Debug, Deserialize, Serialize)]
-pub enum Message {
-    // No cross-chain messages needed yet
-}
-
-/// Errors
-#[derive(Debug, Error)]
-pub enum LiveDraftArenaError {
-    #[error("Room name cannot be empty")]
-    EmptyRoomName,
-    #[error("Max players must be between 2 and 8")]
-    InvalidMaxPlayers,
-}
-
-/// Contract ABI
-pub struct LiveDraftArenaAbi;
-
-impl ContractAbi for LiveDraftArenaAbi {
-    type Operation = Operation;
-    type Response = ();
-}
-
-impl WithContractAbi for LiveDraftArena {
-    type Abi = LiveDraftArenaAbi;
-}
+pub enum Message {}
 
 /// Application state
 #[derive(RootView)]
@@ -88,10 +64,10 @@ impl Contract for LiveDraftArena {
             Operation::CreateRoom { room_name, max_players } => {
                 // Validate input
                 if room_name.trim().is_empty() {
-                    panic!("{}", LiveDraftArenaError::EmptyRoomName);
+                    return vec![];
                 }
                 if max_players < 2 || max_players > 8 {
-                    panic!("{}", LiveDraftArenaError::InvalidMaxPlayers);
+                    return vec![];
                 }
 
                 // Store room metadata
@@ -103,9 +79,7 @@ impl Contract for LiveDraftArena {
 
                 // Use a dummy chain ID for now
                 let chain_id = ChainId::root(0);
-                self.rooms
-                    .insert(&chain_id, metadata)
-                    .expect("Failed to store room metadata");
+                let _ = self.rooms.insert(&chain_id, metadata);
 
                 vec![]
             }
