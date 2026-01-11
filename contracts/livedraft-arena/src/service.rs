@@ -1,58 +1,59 @@
-use async_graphql::{Request, Response, Schema};
-use linera_sdk::{
-    base::ChainId,
-    views::View,
-    Service, ServiceRuntime,
-};
+use async_graphql::{Request, Response, Schema, SimpleObject};
+use linera_sdk::{Service, ServiceRuntime};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::{DraftRoomMetadata, Lobby};
+use crate::LiveDraftArena;
 
-/// GraphQL service for the Lobby.
-pub struct LobbyService {
-    state: Arc<Lobby>,
+/// GraphQL service
+pub struct LiveDraftArenaService {
+    state: Arc<LiveDraftArena>,
 }
 
-/// Room data for GraphQL responses.
-#[derive(Debug, Serialize, Deserialize)]
+/// Room data for GraphQL responses
+#[derive(Debug, Serialize, Deserialize, SimpleObject)]
 pub struct RoomData {
-    pub chain_id: ChainId,
-    pub metadata: DraftRoomMetadata,
+    pub chain_id: String,
+    pub room_name: String,
+    pub max_players: u8,
+    pub status: String,
 }
 
-/// GraphQL query root.
+/// GraphQL query root
 pub struct QueryRoot {
-    state: Arc<Lobby>,
+    state: Arc<LiveDraftArena>,
 }
 
 #[async_graphql::Object]
 impl QueryRoot {
-    /// Get all draft rooms.
+    /// Get all draft rooms
     async fn rooms(&self) -> Vec<RoomData> {
         let mut rooms = Vec::new();
         
-        // Iterate through all rooms in the MapView
-        for (chain_id, metadata) in self.state.rooms.iter().await.unwrap() {
-            rooms.push(RoomData {
-                chain_id,
-                metadata,
-            });
+        if let Ok(iter) = self.state.rooms.iter().await {
+            for (chain_id, metadata) in iter {
+                rooms.push(RoomData {
+                    chain_id: chain_id.to_string(),
+                    room_name: metadata.room_name,
+                    max_players: metadata.max_players,
+                    status: format!("{:?}", metadata.status),
+                });
+            }
         }
         
         rooms
     }
 }
 
-impl Service for LobbyService {
+impl Service for LiveDraftArenaService {
     type Parameters = ();
 
     async fn new(runtime: ServiceRuntime<Self>) -> Self {
-        let state = Lobby::load(runtime.root_view_storage_context())
+        let state = LiveDraftArena::load(runtime.root_view_storage_context())
             .await
-            .expect("Failed to load lobby state");
+            .expect("Failed to load state");
         
-        LobbyService {
+        LiveDraftArenaService {
             state: Arc::new(state),
         }
     }
